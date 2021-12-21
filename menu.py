@@ -1,7 +1,7 @@
 import pygame
 import sys
 import os
-pygame.mixer.init()()#Inicializando a biblioteca da música
+pygame.mixer.init()#Inicializando a biblioteca da música
 
 #Carregando as imagens de background
 bg_image = pygame.transform.scale(pygame.image.load(

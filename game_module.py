@@ -4,15 +4,17 @@ from pygame.mixer import Sound
 from menu import *
 from tiles import *
 
-debug = False
+debug = False # debug
 
+# iniciando e criando fonte
 pg.font.init()
 myfont = pg.font.SysFont('Comic Sans MS', 10)
 
-WIN = pygame.USEREVENT + 1
+WIN = pygame.USEREVENT + 1  # evento personalizado
 
-atual = 1
+atual = 1  # variavel de selecionar o mapa 
 
+# dicionario com os mapas
 levels = {
     1:"assets\maps\map1.csv",
     2:"assets\maps\map2.csv"
@@ -29,6 +31,7 @@ class Player:
 
         self.collect = {'coin': 0, 'potion1': False, 'potion2': False}
 
+        # sprites para a animação (em string)
         self.sprites = {
             'left': [
                 'assets/player/player-left1.png',
@@ -55,24 +58,31 @@ class Player:
                 'assets/player/player-down4.png',
             ],
         }
+        # variaveis para a animação
         self.loadSprites()
         self.img = self.sprites['right'][0]
         self.aniFrame = 0
 
+        # criando retangulo de colisão
         self.rect = self.img.get_rect()
         self.rect.x, self.rect.y = self.pos
 
+    # função para transformar os caminhos em string em sprites
     def loadSprites(self):
         for cod, frames in self.sprites.items():
             for i, sprite in enumerate(frames):
                 self.sprites[cod][i] = pg.image.load(sprite).convert_alpha()
 
+    # colisão em geral
     def checkcollision(self):
+        # bloco normais 
         for tile in self.game.map.tiles:
             if self.rect.colliderect(tile.rect):
                 return True
+        # objetos unicos
         for obj in self.game.map.objects:
             if self.rect.colliderect(obj.rect):
+                # coletaveis
                 if obj.collectable:
                     if obj.id == 'coin':
                         coin_sound.play()
@@ -80,6 +90,7 @@ class Player:
                     else:
                         self.collect[obj.id] = True
                     self.game.map.objects.remove(obj)
+                # verificando se o bloco esta da mesma cor 
                 if obj.color == self.game.bgColor:
                     continue
                 if obj.solid:
@@ -124,34 +135,38 @@ class Game:
     def __init__(self):
         pg.init()
         pg.display.set_caption("Spectre")
-        self.running, self.playing = True, False
+        self.running, self.playing = True, False  # variaveis usadas para o sistema de menus
         self.debug = False
 
+        # teclas que seram usadas no menu
         self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY = False, False, False, False
 
+        # configurando a tela
         self.DISPLAY_W, self.DISPLAY_H = 900, 600
         self.display = pg.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.window = pg.display.set_mode((self.DISPLAY_W, self.DISPLAY_H))
         self.font_name = pg.font.get_default_font()
 
+        # definindo os menus 
         self.main_menu = MainMenu(self)
         self.options = OptionsMenu(self)
         self.credits = CreditsMenu(self)
         self.endmenu = EndMenu(self)
-        self.curr_menu = self.main_menu
+        self.curr_menu = self.main_menu # menu atual
 
-        self.clock = pg.time.Clock()
-        self.bgColor = colors.white
+        self.clock = pg.time.Clock() # variavel para definir o fps
+        self.bgColor = colors.white  # cor de fundo
 
-
+    # funçaõs que verifica se todas as moedas foram coletadas
     def victory(self):
         count = 0
         for obj in self.map.objects:
             if obj.id == "coin":
                 count += 1
         if count == 0:
-            pygame.event.post(pygame.event.Event(WIN))
+            pygame.event.post(pygame.event.Event(WIN))  # ativando evento personalizado
 
+    # interface grafica(o menu que possuem as cores no canto superior esquerdo)
     def colorOverlay(self, surf):
         pg.draw.rect(surf, colors.black, (19, 19, 28, 10), 0)
         pg.draw.rect(surf, colors.white, (20, 20, 8, 8), 0)
@@ -174,6 +189,7 @@ class Game:
         if keys[pg.K_DOWN]:
             self.player.vel = (0, self.player.speed)
 
+    # função que verfica teclas espeficas(mudar cor, debug e sair do jogo)
     def keyPress(self, e):
         if e.key == pg.K_1:
             self.bgColor = colors.white
@@ -185,10 +201,6 @@ class Game:
             self.player.collect['potion2'] = False
         if e.key == pg.K_0:
             self.debug = not self.debug
-        if e.key == pg.K_r:
-            self.map = TileMap(self.map_file)
-            self.player = Player(self)
-            self.bgColor = colors.white
         if e.key == pg.K_ESCAPE:
             self.playing = False
 
@@ -227,11 +239,15 @@ class Game:
                     self.running, self.playing = False, False
                 if event.type == pg.KEYDOWN:
                     self.keyPress(event)
+                
+                # mudando de fase 
                 if event.type == WIN:
                     global atual
                     atual += 1
+                    # indo para a tela final
                     if atual > 2:
                         victory_music.play()
+                        self.bgColor = colors.white
                         self.curr_menu = self.endmenu
                         self.playing = False
                     else:
@@ -244,6 +260,7 @@ class Game:
             self.clock.tick(60)
             self.victory()
 
+    # checando teclas do menu
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pg.QUIT:
